@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="今日安排">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#f5f5f7">
+<title>今日安排 · Daily Planner</title>
+<style>
+:root{
+  --bg:#f5f5f7;
+  --card:#ffffff;
+  --ink:#1d1d1f;
+  --ink2:#6e6e73;
+  --ink3:#a1a1a6;
+  --line:rgba(0,0,0,.08);
+  --blue:#0071e3;
+  --radius:16px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg);
+  color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  -webkit-font-smoothing:antialiased;
+  padding:0 20px calc(48px + env(safe-area-inset-bottom));
+  min-height:100vh;
+}
+.app{max-width:620px;margin:0 auto}
+
+/* ---------- Hero ---------- */
+.hero{padding:calc(46px + env(safe-area-inset-top)) 0 0}
+.eyebrow{
+  font-size:11.5px;font-weight:600;letter-spacing:.14em;
+  color:var(--ink3);text-transform:uppercase;
+}
+h1{
+  font-size:34px;font-weight:700;letter-spacing:-.022em;
+  margin:10px 0 6px;line-height:1.15;
+}
+.sub{font-size:15px;color:var(--ink2);margin:0;letter-spacing:-.01em}
+
+/* ---------- Stats ---------- */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:26px}
+.stat{
+  background:var(--card);border:1px solid var(--line);
+  border-radius:var(--radius);padding:15px 16px 13px;
+}
+.stat .num{display:block;font-size:26px;font-weight:600;letter-spacing:-.02em;line-height:1}
+.stat .lbl{display:block;font-size:12px;color:var(--ink3);margin-top:6px;letter-spacing:.01em}
+
+/* ---------- Tabs ---------- */
+.tabs{display:flex;gap:7px;margin-top:22px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+.tabs::-webkit-scrollbar{display:none}
+.tabs button{
+  flex:none;padding:8px 15px;border-radius:999px;
+  border:1px solid var(--line);background:var(--card);
+  font-size:13.5px;color:var(--ink2);font-weight:500;
+  font-family:inherit;cursor:pointer;transition:.18s;
+}
+.tabs button.active{background:var(--ink);color:#fff;border-color:var(--ink)}
+.tabs button:active{transform:scale(.96)}
+
+/* ---------- List head ---------- */
+.list-head{display:flex;justify-content:space-between;align-items:baseline;margin:26px 0 12px}
+.list-head h2{font-size:17px;font-weight:600;margin:0;letter-spacing:-.01em}
+.list-head span{font-size:12.5px;color:var(--ink3)}
+
+/* ---------- List ---------- */
+.list{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:9px}
+.item{
+  display:flex;gap:13px;align-items:flex-start;
+  background:var(--card);border:1px solid var(--line);
+  border-radius:var(--radius);padding:14px 16px;
+  cursor:pointer;transition:.18s;position:relative;
+}
+.item:active{transform:scale(.988)}
+@media(hover:hover){
+  .item:hover{border-color:rgba(0,0,0,.15);box-shadow:0 2px 12px rgba(0,0,0,.05)}
+}
+.check{
+  width:22px;height:22px;border-radius:50%;flex:none;margin-top:1px;
+  border:1.5px solid rgba(0,0,0,.18);background:transparent;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;padding:0;transition:.18s;
+}
+.check svg{opacity:0;transition:.18s;transform:scale(.6)}
+.item.done .check{background:var(--blue);border-color:var(--blue)}
+.item.done .check svg{opacity:1;transform:scale(1)}
+.item.done{opacity:.5}
+.item.done .title{text-decoration:line-through;color:var(--ink3)}
+
+.body{flex:1;min-width:0}
+.title{font-size:15.5px;font-weight:500;letter-spacing:-.011em;line-height:1.4;word-break:break-word}
+.meta{font-size:12.5px;color:var(--ink3);margin-top:5px;display:flex;flex-wrap:wrap;gap:5px;align-items:center}
+.meta .warn{color:#d70015}
+.dot{opacity:.5}
+
+.tag{
+  font-size:11.5px;font-weight:600;padding:4px 9px;border-radius:999px;
+  flex:none;letter-spacing:.005em;white-space:nowrap;margin-top:1px;
+}
+.p1{background:rgba(255,59,48,.10);color:#d70015}
+.p2{background:rgba(0,113,227,.10);color:#0062c4}
+.p3{background:rgba(255,149,0,.13);color:#b25000}
+.p4{background:rgba(120,120,128,.12);color:#6e6e73}
+
+/* ---------- Empty ---------- */
+.empty{
+  text-align:center;padding:52px 20px;color:var(--ink3);
+  font-size:15px;line-height:1.9;
+}
+.empty b{display:block;color:var(--ink2);font-weight:500;font-size:15.5px;margin-bottom:4px}
+.empty span{font-size:13px}
+
+/* ---------- Buttons ---------- */
+.add-btn{
+  width:100%;margin-top:11px;padding:16px;
+  border:1.5px dashed rgba(0,0,0,.15);background:transparent;
+  border-radius:var(--radius);color:var(--ink2);
+  font-size:14.5px;font-weight:500;font-family:inherit;
+  cursor:pointer;transition:.18s;
+}
+.add-btn:hover{border-color:var(--blue);color:var(--blue);background:rgba(0,113,227,.03)}
+.add-btn:active{transform:scale(.99)}
+
+.bulk-btn{
+  width:100%;margin-top:11px;padding:14px;
+  border:none;background:rgba(0,113,227,.08);color:var(--blue);
+  border-radius:var(--radius);font-size:14px;font-weight:500;
+  font-family:inherit;cursor:pointer;transition:.18s;
+}
+.bulk-btn:hover{background:rgba(0,113,227,.13)}
+
+.foot{display:flex;justify-content:center;gap:6px;margin-top:34px;flex-wrap:wrap}
+.foot button{
+  background:none;border:none;font-size:12.5px;color:var(--ink3);
+  font-family:inherit;cursor:pointer;padding:7px 10px;border-radius:8px;transition:.18s;
+}
+.foot button:hover{color:var(--blue);background:rgba(0,113,227,.06)}
+
+/* ---------- Sheet ---------- */
+.sheet{position:fixed;inset:0;z-index:100;display:none}
+.sheet.open{display:block}
+.mask{position:absolute;inset:0;background:rgba(0,0,0,.35);animation:fade .22s ease}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+.panel{
+  position:absolute;left:0;right:0;bottom:0;margin:0 auto;
+  width:100%;max-width:620px;background:#fff;
+  border-radius:22px 22px 0 0;
+  max-height:92vh;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  padding:6px 22px calc(26px + env(safe-area-inset-bottom));
+  animation:up .3s cubic-bezier(.32,.72,0,1);
+  box-shadow:0 -8px 40px rgba(0,0,0,.12);
+}
+@keyframes up{from{transform:translateY(100%)}to{transform:translateY(0)}}
+@media(min-width:700px){
+  .sheet{display:none}
+  .sheet.open{display:flex;align-items:center;justify-content:center}
+  .mask{position:fixed}
+  .panel{position:relative;border-radius:22px;max-height:86vh;animation:pop .22s ease}
+  @keyframes pop{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:scale(1)}}
+}
+
+.sheet-head{display:flex;justify-content:space-between;align-items:center;padding:14px 0 20px;position:sticky;top:0;background:#fff;z-index:2}
+.sheet-head .sheet-title{font-size:15px;font-weight:600}
+.text-btn{
+  background:none;border:none;font-family:inherit;font-size:15px;
+  color:var(--ink2);cursor:pointer;padding:4px 0;transition:.18s;
+}
+.text-btn.primary{color:var(--blue);font-weight:600}
+.text-btn:hover{opacity:.7}
+
+.field{margin-bottom:18px}
+.field label{
+  display:block;font-size:12px;font-weight:600;color:var(--ink3);
+  margin-bottom:8px;letter-spacing:.04em;
+}
+.input{
+  width:100%;padding:12px 14px;border-radius:12px;
+  border:1px solid var(--line);background:#fafafa;
+  font-size:16px;font-family:inherit;color:var(--ink);
+  outline:none;transition:.18s;-webkit-appearance:none;appearance:none;
+}
+.input::placeholder{color:var(--ink3)}
+.input:focus{border-color:var(--blue);background:#fff;box-shadow:0 0 0 3.5px rgba(0,113,227,.11)}
+textarea.input{resize:none;line-height:1.55}
+.input.big{font-size:17px;font-weight:500;padding:14px}
+select.input{background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23a1a1a6' stroke-width='2.5' stroke-linecap='round'><path d='M6 9l6 6 6-6'/></svg>");background-repeat:no-repeat;background-position:right 14px center;padding-right:36px}
+
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.hint{font-size:11.5px;color:var(--ink3);margin-top:7px;letter-spacing:.01em}
+
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.seg button{
+  padding:11px 8px;border-radius:12px;border:1px solid var(--line);
+  background:#fafafa;font-size:13.5px;font-family:inherit;
+  color:var(--ink2);cursor:pointer;transition:.18s;font-weight:500;
+}
+.seg button.on[data-p="1"]{background:rgba(255,59,48,.10);color:#d70015;border-color:rgba(255,59,48,.35)}
+.seg button.on[data-p="2"]{background:rgba(0,113,227,.10);color:#0062c4;border-color:rgba(0,113,227,.35)}
+.seg button.on[data-p="3"]{background:rgba(255,149,0,.13);color:#b25000;border-color:rgba(255,149,0,.38)}
+.seg button.on[data-p="4"]{background:rgba(120,120,128,.12);color:#555;border-color:rgba(120,120,128,.35)}
+
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{
+  padding:8px 15px;border-radius:999px;border:1px solid var(--line);
+  background:#fafafa;font-size:13px;font-family:inherit;
+  color:var(--ink2);cursor:pointer;transition:.18s;
+}
+.chip.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+
+.sheet-actions{display:flex;gap:10px;margin-top:26px}
+.sheet-actions button{
+  flex:1;padding:13px;border-radius:12px;border:1px solid var(--line);
+  background:#fafafa;font-size:14px;font-family:inherit;font-weight:500;
+  color:var(--ink2);cursor:pointer;transition:.18s;
+}
+.sheet-actions button:hover{background:#f0f0f2}
+.sheet-actions .danger{color:#d70015;border-color:rgba(255,59,48,.22);background:rgba(255,59,48,.05)}
+.sheet-actions .danger:hover{background:rgba(255,59,48,.1)}
+
+/* ---------- Toast ---------- */
+.toast{
+  position:fixed;left:50%;bottom:calc(30px + env(safe-area-inset-bottom));
+  transform:translate(-50%,20px);opacity:0;pointer-events:none;
+  background:rgba(29,29,31,.94);color:#fff;backdrop-filter:blur(12px);
+  padding:13px 20px;border-radius:14px;font-size:14px;font-weight:500;
+  z-index:200;transition:.3s cubic-bezier(.32,.72,0,1);max-width:86vw;
+  text-align:center;line-height:1.4;
+}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <header class="hero">
+    <div class="eyebrow" id="eyebrow">MONDAY · DAILY PLANNER</div>
+    <h1>今日安排</h1>
+    <p class="sub">把重要的事，一件一件做好。</p>
+  </header>
+
+  <section class="stats">
+    <div class="stat"><span class="num" id="statTodo">0</span><span class="lbl">待办事项</span></div>
+    <div class="stat"><span class="num" id="statUrgent">0</span><span class="lbl">重要紧急</span></div>
+    <div class="stat"><span class="num" id="statDone">0</span><span class="lbl">已完成</span></div>
+  </section>
+
+  <nav class="tabs" id="tabs">
+    <button data-view="today" class="active">今天</button>
+    <button data-view="tomorrow">明天</button>
+    <button data-view="week">本周</button>
+    <button data-view="overdue">逾期</button>
+    <button data-view="all">全部</button>
+  </nav>
+
+  <div class="list-head">
+    <h2 id="listTitle">优先处理</h2>
+    <span>按重要程度排序</span>
+  </div>
+
+  <ul class="list" id="list"></ul>
+
+  <button class="add-btn" id="addBtn">＋ 添加一件重要的事</button>
+
+  <footer class="foot">
+    <button id="icsBtn">导出到系统日历</button>
+    <button id="exportBtn">导出备份</button>
+    <button id="importBtn">导入备份</button>
+  </footer>
+</div>
+
+<!-- 编辑面板 -->
+<div class="sheet" id="sheet">
+  <div class="mask" data-close></div>
+  <div class="panel">
+    <div class="sheet-head">
+      <button class="text-btn" data-close>取消</button>
+      <span class="sheet-title" id="sheetTitle">新建事项</span>
+      <button class="text-btn primary" id="saveBtn">保存</button>
+    </div>
+
+    <div class="field">
+      <input class="input big" id="fTitle" placeholder="要做什么？" maxlength="80" autocomplete="off">
+    </div>
+
+    <div class="field">
+      <label>优先级</label>
+      <div class="seg" id="segPrio">
+        <button data-p="1">重要紧急</button>
+        <button data-p="2">重要不急</button>
+        <button data-p="3">紧急次要</button>
+        <button data-p="4">不急不重</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>日期与截止时间</label>
+      <div class="row">
+        <input type="date" class="input" id="fDate">
+        <input type="time" class="input" id="fDue">
+      </div>
+    </div>
+
+    <div class="field">
+      <label>提醒</label>
+      <div class="row">
+        <input type="time" class="input" id="fRemind">
+        <select class="input" id="fRepeat">
+          <option value="none">不重复</option>
+          <option value="daily">每天重复</option>
+          <option value="weekly">每周重复</option>
+        </select>
+      </div>
+      <div class="hint">提醒时间留空则不提醒 · 页面打开时才会响铃</div>
+    </div>
+
+    <div class="field">
+      <label>分类</label>
+      <div class="chips" id="chipsCat"></div>
+    </div>
+
+    <div class="field">
+      <label>详细内容 / 备注</label>
+      <textarea class="input" id="fNote" rows="3" placeholder="补充说明（可选）"></textarea>
+    </div>
+
+    <div class="sheet-actions" id="sheetActions">
+      <button id="postponeBtn">顺延到明天</button>
+      <button id="deleteBtn" class="danger">删除</button>
+    </div>
+  </div>
+</div>
+
+<input type="file" id="fileInput" accept=".json,application/json" style="display:none">
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+'use strict';
+
+/* ================= 常量 ================= */
+const STORE_KEY = 'daily-planner.items.v1';
+const CATS = ['学业','工作','个人','生活','健康'];
+const PRIO = {
+  1:{label:'重要紧急', cls:'p1'},
+  2:{label:'重要不急', cls:'p2'},
+  3:{label:'紧急次要', cls:'p3'},
+  4:{label:'不急不重', cls:'p4'}
+};
+const WD = ['SUNDAY','MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY'];
+
+const $ = s => document.querySelector(s);
+const pad2 = n => String(n).padStart(2,'0');
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+/* ================= 状态 ================= */
+let items = [];
+let view = 'today';
+let editingId = null;
+let selPriority = 1;
+let selCat = '学业';
+let curDate = '';
+const notified = new Set();
+
+/* ================= 日期工具 ================= */
+function keyOf(d){ return d.getFullYear() + '-' + pad2(d.getMonth()+1) + '-' + pad2(d.getDate()); }
+function todayKey(){ return keyOf(new Date()); }
+function offsetKey(n){ const d = new Date(); d.setDate(d.getDate()+n); return keyOf(d); }
+function weekRange(){
+  const d = new Date();
+  const shift = (d.getDay() + 6) % 7;          // 周一 = 0
+  const s = new Date(d); s.setDate(d.getDate() - shift);
+  const e = new Date(s); e.setDate(s.getDate() + 6);
+  return [keyOf(s), keyOf(e)];
+}
+function fmtWhen(it){
+  const t = todayKey();
+  let day;
+  if(it.date === t) day = '今天';
+  else if(it.date === offsetKey(1)) day = '明天';
+  else if(it.date === offsetKey(-1)) day = '昨天';
+  else { const p = it.date.split('-'); day = (+p[1]) + '月' + (+p[2]) + '日'; }
+  return it.due ? day + ' ' + it.due : day;
+}
+
+/* ================= 存储 ================= */
+function load(){
+  try{
+    const raw = localStorage.getItem(STORE_KEY);
+    items = raw ? JSON.parse(raw) : [];
+    if(!Array.isArray(items)) items = [];
+  }catch(e){ items = []; }
+}
+function save(){
+  try{ localStorage.setItem(STORE_KEY, JSON.stringify(items)); }
+  catch(e){ toast('存储空间不足，请导出备份'); }
+}
+
+/* ================= 视图筛选 ================= */
+function getViewItems(){
+  const t = todayKey();
+  let arr = items.slice();
+  if(view === 'today') arr = arr.filter(i => i.date === t);
+  else if(view === 'tomorrow') arr = arr.filter(i => i.date === offsetKey(1));
+  else if(view === 'week'){ const [s,e] = weekRange(); arr = arr.filter(i => i.date >= s && i.date <= e); }
+  else if(view === 'overdue') arr = arr.filter(i => i.date < t && !i.done);
+
+  arr.sort((a,b) => {
+    if(!!a.done !== !!b.done) return a.done ? 1 : -1;
+    if((a.priority||4) !== (b.priority||4)) return (a.priority||4) - (b.priority||4);
+    return (a.date + (a.due || '99:99')).localeCompare(b.date + (b.due || '99:99'));
+  });
+  return arr;
+}
+
+/* ================= 渲染 ================= */
+function render(){
+  const now = new Date();
+  $('#eyebrow').textContent = WD[now.getDay()] + ' · DAILY PLANNER';
+
+  // 统计（固定基于今天）
+  const t = todayKey();
+  const today = items.filter(i => i.date === t);
+  $('#statTodo').textContent   = today.filter(i => !i.done).length;
+  $('#statUrgent').textContent = today.filter(i => !i.done && i.priority === 1).length;
+  $('#statDone').textContent   = today.filter(i => i.done).length;
+
+  // 标题
+  const titles = {today:'优先处理', tomorrow:'明日安排', week:'本周事项', overdue:'逾期未完成', all:'全部事项'};
+  $('#listTitle').textContent = titles[view] || '优先处理';
+
+  // 列表
+  const arr = getViewItems();
+  const list = $('#list');
+
+  if(!arr.length){
+    const tips = {
+      today:'今天还没有安排', tomorrow:'明天还是空的',
+      week:'本周还没有事项', overdue:'太好了，没有逾期事项', all:'还没有任何记录'
+    };
+    list.innerHTML = '<li><div class="empty"><b>' + tips[view] + '</b><span>点击下方按钮，添加第一件重要的事</span></div></li>';
+  } else {
+    list.innerHTML = arr.map(it => {
+      const p = PRIO[it.priority] || PRIO[4];
+      const overdue = !it.done && it.date < t;
+      const meta = [];
+      meta.push('<span class="' + (overdue ? 'warn' : '') + '">' + esc(fmtWhen(it)) + '</span>');
+      if(it.cat) meta.push('<span class="dot">·</span><span>' + esc(it.cat) + '</span>');
+      if(it.remind) meta.push('<span class="dot">·</span><span>⏰ ' + esc(it.remind) + '</span>');
+      if(it.repeat && it.repeat !== 'none') meta.push('<span class="dot">·</span><span>' + (it.repeat === 'daily' ? '每天' : '每周') + '</span>');
+
+      return '<li class="item' + (it.done ? ' done' : '') + '" data-id="' + it.id + '">'
+        + '<button class="check" data-act="toggle" aria-label="切换完成">'
+        + '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7"/></svg>'
+        + '</button>'
+        + '<div class="body">'
+        +   '<div class="title">' + esc(it.title) + '</div>'
+        +   '<div class="meta">' + meta.join('') + '</div>'
+        + '</div>'
+        + '<span class="tag ' + p.cls + '">' + p.label + '</span>'
+        + '</li>';
+    }).join('');
+
+    // 逾期视图：一键顺延
+    if(view === 'overdue'){
+      list.insertAdjacentHTML('beforeend',
+        '<li><button class="bulk-btn" id="bulkBtn">全部顺延到今天</button></li>');
+    }
+  }
+}
+
+/* ================= 事项操作 ================= */
+function toggleDone(id){
+  const it = items.find(i => i.id === id);
+  if(!it) return;
+  it.done = !it.done;
+  it.doneAt = it.done ? Date.now() : null;
+
+  // 重复任务：完成后自动生成下一周期
+  if(it.done && it.repeat && it.repeat !== 'none'){
+    const base = new Date(it.date + 'T00:00:00');
+    base.setDate(base.getDate() + (it.repeat === 'weekly' ? 7 : 1));
+    const nk = keyOf(base);
+    const dup = items.some(x => x.title === it.title && x.date === nk);
+    if(!dup){
+      items.push(Object.assign({}, it, {
+        id: uid(), date: nk, done: false, doneAt: null, createdAt: Date.now()
+      }));
+    }
+  }
+  save();
+  render();
+}
+
+/* ================= 面板 ================= */
+function buildChips(){
+  $('#chipsCat').innerHTML = CATS.map(c =>
+    '<button class="chip" data-cat="' + c + '">' + c + '</button>'
+  ).join('');
+}
+
+function setPriority(p){
+  selPriority = p;
+  document.querySelectorAll('#segPrio button').forEach(b =>
+    b.classList.toggle('on', +b.dataset.p === p));
+}
+function setCat(c){
+  selCat = c;
+  document.querySelectorAll('#chipsCat .chip').forEach(b =>
+    b.classList.toggle('on', b.dataset.cat === c));
+}
+
+function openSheet(id){
+  editingId = id || null;
+  const it = id ? items.find(i => i.id === id) : null;
+
+  $('#sheetTitle').textContent = it ? '编辑事项' : '新建事项';
+  $('#fTitle').value   = it ? it.title : '';
+  $('#fDate').value    = it ? it.date : (curDate || todayKey());
+  $('#fDue').value     = it ? (it.due || '') : '';
+  $('#fRemind').value  = it ? (it.remind || '') : '';
+  $('#fRepeat').value  = it ? (it.repeat || 'none') : 'none';
+  $('#fNote').value    = it ? (it.note || '') : '';
+  setPriority(it ? it.priority : 1);
+  setCat(it ? (it.cat || '学业') : '学业');
+
+  $('#sheetActions').style.display = it ? 'flex' : 'none';
+  $('#sheet').classList.add('open');
+  if(!it) setTimeout(() => $('#fTitle').focus(), 320);
+
+  if('Notification' in window && Notification.permission === 'default'){
+    Notification.requestPermission();
+  }
+}
+
+function closeSheet(){
+  $('#sheet').classList.remove('open');
+  editingId = null;
+}
+
+function saveItem(){
+  const title = $('#fTitle').value.trim();
+  if(!title){ $('#fTitle').focus(); toast('请填写事项标题'); return; }
+
+  const data = {
+    title,
+    priority: selPriority,
+    date: $('#fDate').value || todayKey(),
+    due: $('#fDue').value || '',
+    remind: $('#fRemind').value || '',
+    repeat: $('#fRepeat').value || 'none',
+    cat: selCat,
+    note: $('#fNote').value.trim()
+  };
+
+  if(editingId){
+    const it = items.find(i => i.id === editingId);
+    if(it) Object.assign(it, data);
+  } else {
+    items.push(Object.assign({ id: uid(), done: false, doneAt: null, createdAt: Date.now() }, data));
+  }
+  save();
+  render();
+  closeSheet();
+}
+
+/* ================= 提醒 ================= */
+function checkReminders(){
+  const now = new Date();
+  const t = todayKey();
+  const nowMin = now.getHours() * 60 + now.getMinutes();
+
+  items.forEach(it => {
+    if(it.done || !it.remind || it.date !== t) return;
+    const parts = it.remind.split(':');
+    const rm = (+parts[0]) * 60 + (+parts[1]);
+    if(nowMin - rm < 0 || nowMin - rm > 1) return;   // 只在到点后 1 分钟内触发
+    const k = it.id + '|' + it.date;
+    if(notified.has(k)) return;
+    notified.add(k);
+    fireNotify(it);
+  });
+}
+
+function fireNotify(it){
+  const body = (it.due ? it.due + ' 截止' : '') + (it.cat ? ' · ' + it.cat : '');
+  if('Notification' in window && Notification.permission === 'granted'){
+    try{
+      new Notification('⏰ ' + it.title, { body: body, tag: it.id });
+      return;
+    }catch(e){ /* 降级 */ }
+  }
+  toast('⏰ ' + it.title + (body ? ' · ' + body : ''));
+}
+
+/* ================= Toast ================= */
+let toastTimer = null;
+function toast(msg){
+  const el = $('#toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2600);
+}
+
+/* ================= 下载 ================= */
+function download(filename, text, type){
+  const blob = new Blob([text], { type: type || 'application/json;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1500);
+}
+
+/* ================= 导出备份 ================= */
+function exportBackup(){
+  const data = { app: 'daily-planner', version: 1, exportedAt: new Date().toISOString(), items };
+  download('daily-planner-backup-' + todayKey() + '.json', JSON.stringify(data, null, 2));
+  toast('备份已导出');
+}
+
+/* ================= 导出 ICS ================= */
+function icsEsc(s){
+  return String(s || '').replace(/\\/g,'\\\\').replace(/;/g,'\\;').replace(/,/g,'\\,').replace(/\n/g,'\\n');
+}
+function icsStamp(d){
+  return d.getUTCFullYear() + pad2(d.getUTCMonth()+1) + pad2(d.getUTCDate()) + 'T'
+       + pad2(d.getUTCHours()) + pad2(d.getUTCMinutes()) + pad2(d.getUTCSeconds()) + 'Z';
+}
+
+function exportICS(){
+  const list = items.filter(i => !i.done);
+  if(!list.length){ toast('没有待办事项可以导出'); return; }
+
+  const out = ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Daily Planner//CN','CALSCALE:GREGORIAN','METHOD:PUBLISH'];
+  const stamp = icsStamp(new Date());
+
+  list.forEach(it => {
+    const d = it.date.replace(/-/g,'');
+    const tp = (it.due || '09:00').split(':');
+    const hh = +tp[0], mm = +tp[1];
+    const start = d + 'T' + pad2(hh) + pad2(mm) + '00';
+    let eh = hh, em = mm + 30;
+    if(em >= 60){ em -= 60; eh = (eh + 1) % 24; }
+    const end = d + 'T' + pad2(eh) + pad2(em) + '00';
+
+    out.push('BEGIN:VEVENT');
+    out.push('UID:' + it.id + '@daily-planner');
+    out.push('DTSTAMP:' + stamp);
+    out.push('DTSTART:' + start);
+    out.push('DTEND:' + end);
+    out.push('SUMMARY:' + icsEsc(it.title));
+    if(it.note) out.push('DESCRIPTION:' + icsEsc(it.note));
+    if(it.cat) out.push('CATEGORIES:' + icsEsc(it.cat));
+
+    if(it.remind){
+      const rp = it.remind.split(':');
+      let diff = (hh * 60 + mm) - ((+rp[0]) * 60 + (+rp[1]));
+      if(diff < 0) diff = 0;
+      out.push('BEGIN:VALARM');
+      out.push('ACTION:DISPLAY');
+      out.push('TRIGGER:-PT' + diff + 'M');
+      out.push('DESCRIPTION:' + icsEsc(it.title));
+      out.push('END:VALARM');
+    }
+    if(it.repeat === 'daily') out.push('RRULE:FREQ=DAILY');
+    if(it.repeat === 'weekly') out.push('RRULE:FREQ=WEEKLY');
+    out.push('END:VEVENT');
+  });
+
+  out.push('END:VCALENDAR');
+  download('daily-planner-' + todayKey() + '.ics', out.join('\r\n'), 'text/calendar;charset=utf-8');
+  toast('已导出，用系统日历打开即可获得准时闹钟');
+}
+
+/* ================= 导入备份 ================= */
+function importBackup(file){
+  const reader = new FileReader();
+  reader.onload = () => {
+    try{
+      const data = JSON.parse(reader.result);
+      const arr = Array.isArray(data) ? data : data.items;
+      if(!Array.isArray(arr)) throw new Error('bad');
+      const exist = new Set(items.map(i => i.id));
+      let added = 0;
+      arr.forEach(raw => {
+        if(!raw || !raw.title) return;
+        const it = {
+          id: raw.id || uid(),
+          title: String(raw.title),
+          note: raw.note || '',
+          date: raw.date || todayKey(),
+          due: raw.due || '',
+          remind: raw.remind || '',
+          repeat: raw.repeat || 'none',
+          priority: [1,2,3,4].includes(+raw.priority) ? +raw.priority : 4,
+          cat: raw.cat || '其他',
+          done: !!raw.done,
+          doneAt: raw.doneAt || null,
+          createdAt: raw.createdAt || Date.now()
+        };
+        if(exist.has(it.id)) return;
+        exist.add(it.id);
+        items.push(it);
+        added++;
+      });
+      save(); render();
+      toast(added ? '已导入 ' + added + ' 条事项' : '没有新的事项');
+    }catch(e){
+      toast('文件格式不正确');
+    }
+  };
+  reader.readAsText(file);
+}
+
+/* ================= 事件绑定 ================= */
+function bind(){
+  // Tab 切换
+  $('#tabs').addEventListener('click', e => {
+    const btn = e.target.closest('button');
+    if(!btn) return;
+    view = btn.dataset.view;
+    Array.from($('#tabs').children).forEach(x => x.classList.toggle('active', x === btn));
+    render();
+  });
+
+  // 列表交互
+  $('#list').addEventListener('click', e => {
+    if(e.target.id === 'bulkBtn'){
+      const t = todayKey();
+      items.forEach(i => { if(i.date < t && !i.done) i.date = t; });
+      save(); render();
+      toast('已全部顺延到今天');
+      return;
+    }
+    const li = e.target.closest('.item');
+    if(!li) return;
+    const id = li.dataset.id;
+    if(e.target.closest('.check')){ toggleDone(id); return; }
+    openSheet(id);
+  });
+
+  // 新建
+  $('#addBtn').addEventListener('click', () => {
+    curDate = todayKey();
+    openSheet(null);
+  });
+
+  // 关闭面板
+  $('#sheet').addEventListener('click', e => {
+    if(e.target.hasAttribute('data-close')) closeSheet();
+  });
+  document.addEventListener('keydown', e => {
+    if(e.key === 'Escape' && $('#sheet').classList.contains('open')) closeSheet();
+  });
+
+  // 优先级
+  $('#segPrio').addEventListener('click', e => {
+    const b = e.target.closest('button');
+    if(b) setPriority(+b.dataset.p);
+  });
+
+  // 分类
+  $('#chipsCat').addEventListener('click', e => {
+    const b = e.target.closest('.chip');
+    if(b) setCat(b.dataset.cat);
+  });
+
+  // 截止时间 → 自动带出提醒时间
+  $('#fDue').addEventListener('change', () => {
+    if(!$('#fRemind').value) $('#fRemind').value = $('#fDue').value;
+  });
+
+  // 保存
+  $('#saveBtn').addEventListener('click', saveItem);
+  $('#fTitle').addEventListener('keydown', e => {
+    if(e.key === 'Enter'){ e.preventDefault(); saveItem(); }
+  });
+
+  // 顺延
+  $('#postponeBtn').addEventListener('click', () => {
+    const it = items.find(i => i.id === editingId);
+    if(!it) return;
+    const d = new Date(it.date + 'T00:00:00');
+    d.setDate(d.getDate() + 1);
+    it.date = keyOf(d);
+    it.done = false;
+    save(); render(); closeSheet();
+    toast('已顺延到 ' + it.date.slice(5).replace('-','月') + '日');
+  });
+
+  // 删除
+  $('#deleteBtn').addEventListener('click', () => {
+    if(!editingId) return;
+    const it = items.find(i => i.id === editingId);
+    if(!it) return;
+    if(!confirm('确定删除「' + it.title + '」？')) return;
+    items = items.filter(i => i.id !== editingId);
+    save(); render(); closeSheet();
+    toast('已删除');
+  });
+
+  // 页脚
+  $('#exportBtn').addEventListener('click', exportBackup);
+  $('#icsBtn').addEventListener('click', exportICS);
+  $('#importBtn').addEventListener('click', () => $('#fileInput').click());
+  $('#fileInput').addEventListener('change', e => {
+    const f = e.target.files && e.target.files[0];
+    if(f) importBackup(f);
+    e.target.value = '';
+  });
+
+  // 回到页面时补检查一次提醒
+  document.addEventListener('visibilitychange', () => {
+    if(!document.hidden) checkReminders();
+  });
+}
+
+/* ================= 启动 ================= */
+function init(){
+  load();
+  buildChips();
+  setPriority(1);
+  setCat('学业');
+  $('#fDate').value = todayKey();
+  bind();
+  render();
+
+  checkReminders();
+  setInterval(checkReminders, 30000);
+}
+
+init();
+})();
+</script>
+</body>
+</html>
